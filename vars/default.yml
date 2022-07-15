@@ -1,0 +1,14 @@
+---
+#System Settings
+php_modules: [ 'php-curl', 'php-gd', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'php-soap', 'php-intl', 'php-zip' ]
+
+#Settings for MySQL
+mysql_root_password: "Pa33w0rdx.."
+mysql_db: "wordpress_01"
+mysql_user: "wp_db_admin"
+mysql_password: "Rts33nsid-dffe"
+
+#HTTP Host Settings
+http_host: wpress"
+http_conf: "wpress.conf"
+http_port: "80"
