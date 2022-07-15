@@ -5,11 +5,11 @@
     - vars/default.yml
 
   tasks:
-    - name: Install needed prerequisites
+    - name: Uptade apt cache
       apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
       tags: [ system ]
 
-    - name: Install Packages
+    - name: Install Needed Packages
       apt: name={{ item }} update_cache=yes state=latest
       loop: [ 'apache2', 'mysql-server', 'python3-pymysql', 'php', 'php-mysql', 'libapache2-mod-php' ]
       tags: [ system ]
@@ -19,7 +19,7 @@
       loop: "{{ php_modules }}"
       tags: [ system ]
 
-  # Apache Configuration
+  # Apache Configuration for WP
     - name: Create document root
       file:
         path: "/var/www/{{ http_host }}"
