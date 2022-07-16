@@ -1,11 +1,11 @@
 ---
-- hosts: webserver
-  become: true
-  vars_files:
+ - hosts: webserver
+   become: true
+   vars_files:
     - vars/default.yml
 
-  tasks:
-    - name: Uptade apt cache
+   tasks:
+    - name: Upadte apt cache
       apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
       tags: [ system ]
 
