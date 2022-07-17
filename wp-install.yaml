@@ -1,0 +1,174 @@
+---
+ - hosts: webserver
+   become: true
+   vars_files:
+      - vars/default.yml
+   
+   tasks:
+      - name: Update apt cache
+        apt:
+          update_cache: yes
+
+      - name: Install Apache2 package
+        apt:
+          name: apache2
+          state: present
+
+      - name: Install MySQL2 db server
+        apt:
+          name: mysql-server
+          state: present
+
+      - name: Install python3-pymysql package
+        apt:
+          name: python3-pymysql
+          state: present
+    
+      - name: Install PHP server
+        apt:
+          name: php
+          state: present
+
+      - name: Install PHP MySQL connector
+        apt:
+          name: php-mysql
+          state: present
+
+      - name: Install PHP mod for Apache
+        apt:
+          name: libapache2-mod-php
+          state: present
+
+  # Configuration for Apache for Wordpress and MySQL
+  #
+      - name: Document root creation
+        file:
+          path: "/var/www/{{ http_host }}"
+          state: directory
+          owner: "www-data"
+          group: "www-data"
+          mode: '0755'
+
+      - name: VirtualHost setup
+        template:
+          src: "files/apache.conf.j2"
+          dest: "/etc/apache2/sites-available/{{ http_conf }}"
+        notify: Reload Apache
+        tags: [ apache ] 
+
+      - name: Enable rewrite module
+        shell: /usr/sbin/a2enmod rewrite
+        notify: Restart Apache
+        tags: [ apache ]
+
+      - name: Enable new site
+        shell: /usr/sbin/a2ensite {{ http_conf }}
+        notify: Restart Apache
+        tags: [ apache ]
+
+      - name: Disable default website
+        shell: /usr/sbin/a2dissite 000-default.conf
+        notify: Restart Apache
+        tags: [ apache ]
+
+  # MySQL database configuration
+  #
+      - name: Set mysql root password
+        mysql_user:
+           name: root
+           password: "{{ mysql_root_password }}"
+           login_unix_socket: /var/run/mysqld/mysqld.sock
+        tags: [ mysql, mysql-root ]
+
+      - name: Remove all anonymous user accounts
+        mysql_user:
+           name: ''
+           host_all: yes
+           state: absent
+           login_user: root
+           login_password: "{{ mysql_root_password }}"
+        tags: [ mysql ]
+
+      - name: Remove test database
+        mysql_db:
+           name: test
+           state: absent
+           login_user: root
+           login_password: "{{ mysql_root_password }}"
+
+      - name: Create WP database
+        mysql_db:
+           name: "{{ mysql_db }}"
+           state: present
+           login_user: root
+           login_password: "{{ mysql_root_password }}"
+        tags: [ mysql ]
+
+      - name: Create WP user for mysql
+        mysql_user:
+           name: "{{ mysql_user }}"
+           password: "{{ mysql_password }}"
+           priv: "{{ mysql_db }}.*:ALL"
+           state: present
+           login_user: root
+           login_password: "{{ mysql_root_password }}"
+        tags: [ mysql ]
+
+
+  # UFW Configuration
+  #
+      - name: "Allow HTTP port {{ http_port}}"
+        ufw:
+           rule: allow
+           port: "{{ http_port }}"
+           proto: tcp
+        tags: [ system ]
+
+
+  # Wordpress configuration
+  #
+
+      - name: Downlaod and unpack latest WordPress
+        unarchive:
+           src: https://wordpress.org/latest.tar.gz
+           dest: "/var/www/{{ http_host }}"
+           remote_src: yes
+           creates: "/var/www/{{ http_host }}/wordpress"
+        tags: [ wordpress ]
+
+
+      - name: Set ownership
+        file:
+           path: "/var/www/{{ http_host }}"
+           state: directory
+           recurse: yes
+           owner: www-data
+           group: www-data
+        tags: [ wordpress ]
+
+      - name: Set dir permissions
+        shell: "/usr/bin/find /var/www/{{ http_host }}/wordpress -type d -exec chmod 755 {} \\;"
+        tags: [ wordpress ]
+
+      - name: Set files permissions
+        shell: "/usr/bin/find /var/www/{{ http_host }}/wordpress -type f -exec chmod 755 {} \\;"
+        tags: [ wordpress ]
+
+      - name: WP-config setup
+        template:
+          src: "files/wp-config.php.j2"
+          dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
+        tags: [ wordpress ]
+
+
+   handlers:
+      - name: Reload Apache
+        service: 
+           name: apache2
+           state: reloaded
+
+      - name: Restart Apache
+        service:
+           name: apache2
+           state: restarted
+

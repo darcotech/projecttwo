@@ -1,0 +1,41 @@
+---
+ - hosts: webserver
+   become: true
+   vars_files:
+      - vars/default.yml
+   
+   tasks:
+      - name: Update apt cache
+        apt:
+          update_cache: yes
+
+      - name: Install Apache2 package
+        apt:
+          name: apache2
+          state: absent
+
+      - name: Install MySQL2 db server
+        apt:
+          name: mysql-server
+          state: absent
+
+      - name: Install python3-pymysql package
+        apt:
+          name: python3-pymysql
+          state: absent
+    
+      - name: Install PHP server
+        apt:
+          name: php
+          state: absent
+
+      - name: Install PHP MySQL connector
+        apt:
+          name: php-mysql
+          state: absent
+
+      - name: Install PHP mod for Apache
+        apt:
+          name: libapache2-mod-php
+          state: absent
+

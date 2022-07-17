@@ -9,6 +9,6 @@ mysql_user: "wp_db_admin"
 mysql_password: "Rts33nsid-dffe"
 
 #HTTP Host Settings
-http_host: wpress"
-http_conf: "wpress.conf"
+http_host: "lms"
+http_conf: "wordpress.conf"
 http_port: "80"
